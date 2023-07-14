@@ -5,7 +5,6 @@ import zipfile
 import csv
 import re
 import unittest
-from student import sum
 
 class TestSum(unittest.TestCase):
     # Tests that the function returns the correct sum of two positive integers
@@ -57,8 +56,8 @@ def update_grades_csv(grade_csv_file, assignment_name, student_name, grades):
     results_directory = "results"
     os.makedirs(results_directory, exist_ok=True)
     results_csv_file = os.path.join(results_directory, "results.csv")
-
-    shutil.copy2(grade_csv_file, results_csv_file)
+    if not os.path.exists(results_csv_file):
+        shutil.copy2(grade_csv_file, results_csv_file)
 
     header = []
     data = []
@@ -77,11 +76,11 @@ def update_grades_csv(grade_csv_file, assignment_name, student_name, grades):
         if assignment_position is None:
             print("Assignment name not found.")
             return
-        print(f"Assignment position: {assignment_position}, Assignment name: {header[assignment_position]}")
 
         # Update the grades for the specific student and assignment
         for row in reader:
-            if row[2] == student_name:
+            name = row[2] + " " + row[1]
+            if name == student_name:
                 row[assignment_position] = grades[0]
             data.append(row)
 
@@ -117,7 +116,7 @@ def generate_custom_output(assignment_name):
                     new_inner_zip_files.extend(inner_zip_files)
                 inner_zip_files = new_inner_zip_files
 
-            os.chdir(temp_dir)
+            os.chdir(temp_dir)            
             print(f"Running unit tests for student: {student_name}")
             result = run_unit_tests()
             os.chdir("..")
