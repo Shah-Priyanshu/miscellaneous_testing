@@ -5,25 +5,22 @@ import zipfile
 import csv
 import re
 import sys
-import importlib, subprocess, time
+import time
+import subprocess
 
+# Prevents the creation of .pyc files
 sys.dont_write_bytecode = True
 
-def some_function():
-
+def sub_process():
     result2 = subprocess.run(['python', 'prof_utest.py'], capture_output=True, text=True)
-
-    # if error then print stderr else print stdout
+    
     if result2.stderr:
-
-        print("stderr:", result2.stderr)
         return result2.stderr
     else:
-        print("stdout:", result2.stdout)
         return result2.stdout
 
-
 def process_grades(grades):
+    # Process the grades obtained from unit tests
     grades = grades.split("\n")
     grades = grades[0]
     total_tests = len(grades)
@@ -36,69 +33,68 @@ def process_grades(grades):
     return grades
 
 def delete_zips(dir):
-    #delete all .zip files in the directory
+    # Delete all .zip files in the directory
     os.chdir(dir)
     student_zips = glob.glob("*.zip")
-    for student_zip in student_zips:  
+    for student_zip in student_zips:
         os.remove(student_zip)
 
 def get_student_file(dir):
-    os.chdir(dir) # temp
+    # Get the student file from the directory
+    os.chdir(dir)
     files = glob.glob("*")
-    for i in files: # arsalan khan
+    for i in files:
         if i.endswith(".py"):
-            print("found")
-            print(os.getcwd())
-            # copy the file to the main directory
-        if os.path.isdir(i):
-            get_student_file(i)
-            
+            continue
+    if os.path.isdir(i):
+        get_student_file(i)
+
 def return_main_dir():
+    # Return to the main directory
     os.chdir("..")
     files = glob.glob("*.py")
     if files == []:
         return_main_dir()
-    
-    
 
 def unzip_last_layer(file_path, target_dir):
+    # Extract the contents of the last layer of the zip file to the target directory
     with zipfile.ZipFile(file_path, 'r') as zip_ref:
         zip_ref.extractall(target_dir)
- 
+
 def unzip_nested_zip(file_path, target_dir):
-    counter = 0
+    # Extract the contents of the nested zip file to the target directory
     flag = False
     support_list = []
-    
+
     while True:
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
             nested_zip_files = [f for f in zip_ref.namelist() if f.endswith('.zip')]
-            
+
             if not flag:
                 support_list.extend(nested_zip_files)
-                    
-            
+
             if nested_zip_files:
                 unzip_last_layer(file_path, target_dir)
                 nested_zip_path = os.path.join(target_dir, nested_zip_files[0])
                 file_path = nested_zip_path
                 flag = True
-                counter += 1
             else:
                 student_name = find_student_name(support_list[0])
                 target_dir_stud = os.path.join(target_dir, student_name)
                 unzip_last_layer(file_path, target_dir_stud)
                 support_list = support_list[1:]
                 if support_list:
-                    file_path = "Temp_submissions\\"+support_list[0]
+                    file_path = f'{temp_dir}\\' + support_list[0]
                     flag = True
                 else:
                     break
-    
+
 def find_student_name(zip_file):
+    # Extract the student name from the zip file name
     student_name = None
     zip_file_basename = os.path.basename(zip_file)
     matches = re.findall(r"[A-Z][a-z]+", zip_file_basename)
+    
     if len(matches) >= 2:
         student_name = " ".join(matches[:2])
     return student_name
@@ -118,7 +114,6 @@ def update_grades_csv(grade_csv_file, assignment_name, student_name, grades):
         header = next(reader)
         assignment_position = None
 
-        # Find the position of the assignment column
         for idx, col in enumerate(header):
             if assignment_name.lower() in col.lower():
                 assignment_position = idx
@@ -128,43 +123,37 @@ def update_grades_csv(grade_csv_file, assignment_name, student_name, grades):
             print("Assignment name not found.")
             return
 
-        # Update the grades for the specific student and assignment
         for row in reader:
             name = row[2] + " " + row[1]
             if name == student_name:
                 row[assignment_position] = grades[0]
             data.append(row)
 
-    # Write the updated data (including existing data and new grades) to the result CSV file
     with open(results_csv_file, "w", newline="") as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(header)
         writer.writerows(data)
+    
+    shutil.copy2(results_csv_file, grade_csv_file)
 
-def bring_files_to_root_dir():
-    return
 def generate_custom_output(assignment_name):
     root_destination_dir = os.getcwd()
     submission_directory = glob.glob("*.zip")
-    temp_dir = "Temp_submissions"
     os.makedirs(temp_dir, exist_ok=True)
-    
+
     unzip_nested_zip(submission_directory[0], temp_dir)
-    
-    print(os.getcwd() )
-    
+
     delete_zips(temp_dir)
 
     student_folders = glob.glob("*")
-    
+
     destination_list = []
     for student_folder in student_folders:
         get_student_file(student_folder)
         destination_list.append(os.getcwd())
-        print(os.getcwd())   
         print(f"Running unit tests for student: {student_folder}")
-        sys.path.append(os.getcwd()) # Temp_submissions\Arslan Khan\khan4587
-        
+        sys.path.append(os.getcwd())
+
         source_dir = os.getcwd()
         file_list = os.listdir(source_dir)
         for file_name in file_list:
@@ -173,30 +162,23 @@ def generate_custom_output(assignment_name):
             shutil.copy(source_file, destination_file)
 
         return_main_dir()
-        marks = some_function()
+        marks = sub_process()
         grades = process_grades(marks)
         print(grades)
-        #print(f"Grades for student {student_folder}: {grades[0]}")
-        
-        grades_csv_file = "grades.csv"  # Update with the actual name of the CSV file
+
+        grades_csv_file = "grades.csv"
         update_grades_csv(grades_csv_file, assignment_name, student_folder, grades)
 
-        print(f"Results for student {student_folder} updated in {grades_csv_file}")
         for file_name in file_list:
             os.remove(file_name)
             print(file_name)
-            # delay for subprocess to finish
             time.sleep(1)
-            
-        # os.remove("prof_utest.py")
-        # shutil.copy("backup\prof_utest.py","prof_utest.py")
-        os.chdir(temp_dir)        
-        # shutil.rmtree(temp_dir)
 
-# Get the final grades from unit tests
+        os.chdir(temp_dir)
 
 def run_code():
     assignment_name = input("Enter assignment name: ")
     generate_custom_output(assignment_name)
-
+    
+temp_dir = "Temp_submissions"
 run_code()
