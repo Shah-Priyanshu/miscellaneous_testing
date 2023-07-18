@@ -5,17 +5,22 @@ import zipfile
 import csv
 import re
 import sys
-import importlib
+import importlib, subprocess
 
 sys.dont_write_bytecode = True
 
 def some_function():
 
-    from prof_utest import run_unit_tests
-    result = run_unit_tests()
-    marks = result.testsRun - len(result.failures) - len(result.errors)
-    grades = [f"{marks}", ""]  # Grades to be updated in CSV
-    return grades   
+    result2 = subprocess.run(['python', 'prof_utest.py'], capture_output=True, text=True)
+
+    # if error then print stderr else print stdout
+    if result2.stderr:
+
+        print("stderr:", result2.stderr)
+        return result2.stderr
+    else:
+        print("stdout:", result2.stdout)
+        return result2.stdout
 
 
 
@@ -184,12 +189,11 @@ def generate_custom_output(assignment_name):
             source_file = os.path.join(source_dir, file_name)
             destination_file = os.path.join(root_destination_dir, file_name)
             shutil.copy(source_file, destination_file)
-        print("1",os.getcwd())
+
         return_main_dir()
-        print("2",os.getcwd())
         grades = some_function()
-        print(f"Grades for student {student_folder}: {grades[0]}")
-        print("3",os.getcwd())
+        print(grades)
+        #print(f"Grades for student {student_folder}: {grades[0]}")
         
         grades_csv_file = "grades.csv"  # Update with the actual name of the CSV file
         update_grades_csv(grades_csv_file, assignment_name, student_folder, grades)
@@ -202,6 +206,13 @@ def generate_custom_output(assignment_name):
         # shutil.copy("backup\prof_utest.py","prof_utest.py")
         os.chdir(temp_dir)        
         # shutil.rmtree(temp_dir)
+
+# Get the final grades from unit tests
+def process_grades(grades):
+    grades = grades.split("\n")
+    grades = grades[0]
+    
+    return grades
 
 
 def run_code():

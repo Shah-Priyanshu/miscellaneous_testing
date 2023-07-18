@@ -1,4 +1,4 @@
-import unittest, importlib, sys
+import unittest
 from student import sum
 
 class TestSum(unittest.TestCase):
@@ -25,19 +25,20 @@ class TestSum(unittest.TestCase):
     # Tests that the function returns the correct sum of the minimum possible integer values
     def test_minimum_integer_values_sum(self):
         assert sum(-2147483648, -2147483648) == -4294967296
-        
-        
-def run_unit_tests():
 
+    def test_string_sum(self):
+        assert sum("a", "b") == "ab"
+        
+
+def run_unit_tests():
     test_suite = unittest.TestLoader().loadTestsFromTestCase(TestSum)
     return_var = unittest.TextTestRunner().run(test_suite)
-    try:
-        del sys.modules['student']
-    except KeyError:
-        pass
 
-    # Clear import caches
-    importlib.invalidate_caches()
-
-    # Import the modified student.py file
     return return_var
+
+# def run_unit_tests():
+#     test_suite = unittest.TestLoader().loadTestsFromTestCase(TestSum)
+#     return_var = unittest.TextTestRunner().run(test_suite)
+
+#     return return_var
+run_unit_tests()
