@@ -5,6 +5,13 @@ import subprocess, os, shutil
 def process_grades(grades):
     grades = grades.split("\n")
     grades = grades[0]
+    total_tests = len(grades)
+    for i in grades:
+        if i == "F":
+            total_tests -= 1
+        elif i == "E":
+            total_tests -= 1
+    grades = str(total_tests)
     return grades
 
 

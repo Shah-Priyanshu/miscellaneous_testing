@@ -5,7 +5,7 @@ import zipfile
 import csv
 import re
 import sys
-import importlib, subprocess
+import importlib, subprocess, time
 
 sys.dont_write_bytecode = True
 
@@ -23,36 +23,18 @@ def some_function():
         return result2.stdout
 
 
+def process_grades(grades):
+    grades = grades.split("\n")
+    grades = grades[0]
+    total_tests = len(grades)
+    for i in grades:
+        if i == "F":
+            total_tests -= 1
+        elif i == "E":
+            total_tests -= 1
+    grades = str(total_tests)
+    return grades
 
-# class TestSum(unittest.TestCase):
-#     # Tests that the function returns the correct sum of two positive integers
-#     def test_positive_integers_sum(self):
-#         assert sum(2, 3) == 6
-
-#     # Tests that the function returns the correct sum of two negative integers
-#     def test_negative_integers_sum(self):
-#         assert sum(-2, -3) == -5
-
-#     # Tests that the function returns the correct sum of one positive and one negative integer
-#     def test_positive_and_negative_integers_sum(self):
-#         assert sum(2, -3) == -1
-
-#     # Tests that the function returns the correct sum of zero and a positive integer
-#     def test_zero_and_positive_integer_sum(self):
-#         assert sum(0, 5) == 5
-
-#     # Tests that the function returns the correct sum of the maximum possible integer values
-#     def test_maximum_integer_values_sum(self):
-#         assert sum(2147483647, 2147483647) == 4294967294
-        
-#     # Tests that the function returns the correct sum of the minimum possible integer values
-#     def test_minimum_integer_values_sum(self):
-#         assert sum(-2147483648, -2147483648) == -4294967296
-        
-        
-# def run_unit_tests():
-#     test_suite = unittest.TestLoader().loadTestsFromTestCase(TestSum)
-#     return unittest.TextTestRunner().run(test_suite)
 def delete_zips(dir):
     #delete all .zip files in the directory
     os.chdir(dir)
@@ -191,7 +173,8 @@ def generate_custom_output(assignment_name):
             shutil.copy(source_file, destination_file)
 
         return_main_dir()
-        grades = some_function()
+        marks = some_function()
+        grades = process_grades(marks)
         print(grades)
         #print(f"Grades for student {student_folder}: {grades[0]}")
         
@@ -202,18 +185,15 @@ def generate_custom_output(assignment_name):
         for file_name in file_list:
             os.remove(file_name)
             print(file_name)
+            # delay for subprocess to finish
+            time.sleep(1)
+            
         # os.remove("prof_utest.py")
         # shutil.copy("backup\prof_utest.py","prof_utest.py")
         os.chdir(temp_dir)        
         # shutil.rmtree(temp_dir)
 
 # Get the final grades from unit tests
-def process_grades(grades):
-    grades = grades.split("\n")
-    grades = grades[0]
-    
-    return grades
-
 
 def run_code():
     assignment_name = input("Enter assignment name: ")
