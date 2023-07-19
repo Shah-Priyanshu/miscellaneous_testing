@@ -34,6 +34,6 @@ class TestSum(unittest.TestCase):
 def run_unit_tests():
     test_suite = unittest.TestLoader().loadTestsFromTestCase(TestSum)
     return_var = unittest.TextTestRunner().run(test_suite)
-    return return_var\
+    return return_var
 
 run_unit_tests()
